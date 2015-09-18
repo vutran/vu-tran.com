@@ -13,25 +13,24 @@ export default class touchMenu {
         this._dragTimeThreshold = 200;
         this._dragType = false;
 
-        // Create custom events
-        this._touchStartEvent = new Event('menu.touchstart');
-        this._touchMoveEvent = new Event('menu.touchmove');
-        this._touchEndEvent = new Event('menu.touchend');
-
+        // Bind the nav close button
+        utils.q('.nav-close').addEventListener('click', function(e) {
+            _this.closeMenu();
+        });
+        // Bind the nav open button
+        utils.q('.menu-button').addEventListener('click', function(e) {
+            _this.openMenu();
+        });
+        // Bind the content button (closes nav)
+        utils.q('.nav-cover').addEventListener('click', function(e) {
+            _this.closeMenu();
+        });
         // If touch support is present
         if ( 'ontouchstart' in document.documentElement ) {
-            // Bind the nav close button
-            utils.q('.nav-close').addEventListener('click', function(e) {
-                _this.closeMenu();
-            });
-            // Bind the nav open button
-            utils.q('.menu-button').addEventListener('click', function(e) {
-                _this.openMenu();
-            });
-            // Bind the content button (closes nav)
-            utils.q('.nav-cover').addEventListener('click', function(e) {
-                _this.closeMenu();
-            });
+            // Create custom events
+            this._touchStartEvent = new Event('menu.touchstart');
+            this._touchMoveEvent = new Event('menu.touchmove');
+            this._touchEndEvent = new Event('menu.touchend');
 
             // Add the touchstart event
             utils.listen('touchstart', function(e) {
