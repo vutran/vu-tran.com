@@ -770,7 +770,7 @@
 
 /***/ },
 /* 21 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -780,7 +780,13 @@
 
 	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	var _utilsJs = __webpack_require__(22);
+
+	var _utilsJs2 = _interopRequireDefault(_utilsJs);
 
 	var touchMenu = (function () {
 	    function touchMenu() {
@@ -795,7 +801,7 @@
 	        this._dragDistanceThreshold = 150;
 	        this._dragTimeThreshold = 200;
 
-	        // Creat custom events
+	        // Create custom events
 	        this._touchStartEvent = new Event('menu.touchstart');
 	        this._touchMoveEvent = new Event('menu.touchmove');
 	        this._touchEndEvent = new Event('menu.touchend');
@@ -803,55 +809,41 @@
 	        // If touch support is present
 	        if ('ontouchstart' in document.documentElement) {
 	            // Bind the nav close button
-	            document.querySelector('.nav-close').addEventListener('click', function (e) {
+	            _utilsJs2['default'].q('.nav-close').addEventListener('click', function (e) {
 	                _this.closeMenu();
 	            });
 	            // Bind the nav open button
-	            document.querySelector('.menu-button').addEventListener('click', function (e) {
+	            _utilsJs2['default'].q('.menu-button').addEventListener('click', function (e) {
 	                _this.openMenu();
 	            });
 	            // Bind the content button (closes nav)
-	            document.querySelector('.nav-cover').addEventListener('click', function (e) {
+	            _utilsJs2['default'].q('.nav-cover').addEventListener('click', function (e) {
 	                _this.closeMenu();
 	            });
+
 	            // Add the touchstart event
-	            document.body.addEventListener('touchstart', function (e) {
-	                var touch = e.changedTouches[0];
-	                // Set the touch start position
-	                _this._touchStartPosition = {
-	                    time: new Date().getTime(),
-	                    x: parseInt(touch.clientX, 10),
-	                    y: parseInt(touch.clientY, 10)
-	                };
+	            _utilsJs2['default'].listen('touchstart', function (e) {
+	                _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
 	                // Run the document event "menu.touchstart"
-	                document.body.dispatchEvent(_this._touchStartEvent);
+	                _utilsJs2['default'].dispatch(_this._touchStartEvent);
 	            });
 	            // Add the touchmove event
-	            document.body.addEventListener('touchmove', function (e) {
-	                var touch = e.changedTouches[0];
+	            _utilsJs2['default'].listen('touchmove', function (e) {
 	                // Set the touch move position
-	                _this._touchMovePosition = {
-	                    time: new Date().getTime(),
-	                    x: parseInt(touch.clientX, 10),
-	                    y: parseInt(touch.clientY, 10)
-	                };
+	                _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
 	                // Run the document event "menu.touchend"
-	                document.body.dispatchEvent(_this._touchMoveEvent);
+	                _utilsJs2['default'].dispatch(_this._touchMoveEvent);
 	            });
 	            // Add the touchend event
-	            document.body.addEventListener('touchend', function (e) {
-	                var touch = e.changedTouches[0];
+	            _utilsJs2['default'].listen('touchend', function (e) {
 	                // Set the touch end position
-	                _this._touchEndPosition = {
-	                    time: new Date().getTime(),
-	                    x: parseInt(touch.clientX, 10),
-	                    y: parseInt(touch.clientY, 10)
-	                };
+	                _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
 	                // Run the document event "zoe.menu.touchend"
-	                document.body.dispatchEvent(_this._touchEndEvent);
+	                _utilsJs2['default'].dispatch(_this._touchEndEvent);
 	            });
+
 	            // Register the event handler for "menu.touchstart"
-	            document.body.addEventListener('menu.touchmove', function (e) {
+	            _utilsJs2['default'].listen('menu.touchmove', function (e) {
 	                // If the nav is opened
 	                if (_this.isNavOpened()) {
 	                    // Remove the transition duration
@@ -859,22 +851,22 @@
 	                }
 	            }, false);
 	            // Register the event handler for "menu.touchmove"
-	            document.body.addEventListener('menu.touchmove', function (e) {
+	            _utilsJs2['default'].listen('menu.touchmove', function (e) {
 	                // If the nav is opened
 	                if (_this.isNavOpened()) {
 	                    var delta = _this.getDelta(_this._touchMovePosition);
 	                    // Only update if delta is positive
 	                    if (delta.x > 0) {
-	                        var navWidth = $('.nav').width();
+	                        var navWidth = _utilsJs2['default'].q('.nav').clientWidth;
 	                        // Update the nav position
-	                        _this.setTransform(document.querySelector('.nav'), delta.x, 0, 0);
+	                        _this.setTransform(_utilsJs2['default'].q('.nav'), delta.x, 0, 0);
 	                        // Update the site wrapper position
-	                        _this.setTransform(document.querySelector('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
+	                        _this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
 	                    }
 	                }
 	            }, false);
 	            // Register the event handler for "menu.touchend"
-	            document.body.addEventListener('menu.touchend', function (e) {
+	            _utilsJs2['default'].listen('menu.touchend', function (e) {
 	                // If the nav is opened
 	                if (_this.isNavOpened()) {
 	                    // Add the transition duration
@@ -894,7 +886,22 @@
 	    }
 
 	    _createClass(touchMenu, [{
-	        key: 'getDelta',
+	        key: 'getPosition',
+
+	        /**
+	         * Retrieve the touch position/time
+	         *
+	         * @access public
+	         * @param Touch touch
+	         * @return void
+	         */
+	        value: function getPosition(touch) {
+	            return {
+	                time: new Date().getTime(),
+	                x: parseInt(touch.clientX, 10),
+	                y: parseInt(touch.clientY, 10)
+	            };
+	        }
 
 	        /**
 	         * Return an delta object of the touch positions
@@ -902,6 +909,8 @@
 	         * @param object currentPosition
 	         * @ereturn object
 	         */
+	    }, {
+	        key: 'getDelta',
 	        value: function getDelta(currentPosition) {
 	            return {
 	                time: currentPosition.time - this._touchStartPosition.time,
@@ -919,8 +928,7 @@
 	         * @return bool
 	         */
 	        value: function isNavOpened() {
-	            return (/nav-opened/.test(document.body.className)
-	            );
+	            return _utilsJs2['default'].hasClass(document.body, 'nav-opened');
 	        }
 	    }, {
 	        key: 'toggleTransition',
@@ -934,11 +942,11 @@
 	         */
 	        value: function toggleTransition(flag) {
 	            if (flag) {
-	                document.querySelector('.nav').style.webkitTransitionDuration = '0.3s';
-	                document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0.3s';
+	                _utilsJs2['default'].q('.nav').style.webkitTransitionDuration = '0.3s';
+	                _utilsJs2['default'].q('.site-wrapper').style.webkitTransitionDuration = '0.3s';
 	            } else {
-	                document.querySelector('.nav').style.webkitTransitionDuration = '0s';
-	                document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0s';
+	                _utilsJs2['default'].q('.nav').style.webkitTransitionDuration = '0s';
+	                _utilsJs2['default'].q('.site-wrapper').style.webkitTransitionDuration = '0s';
 	            }
 	        }
 
@@ -967,8 +975,8 @@
 	    }, {
 	        key: 'openMenu',
 	        value: function openMenu() {
-	            this.setTransform(document.querySelector('.nav'), 0, 0, 0);
-	            this.setTransform(document.querySelector('.site-wrapper'), -240, 0, 0);
+	            this.setTransform(_utilsJs2['default'].q('.nav'), 0, 0, 0);
+	            this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -240, 0, 0);
 	            document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
 	        }
 
@@ -982,8 +990,8 @@
 	        key: 'closeMenu',
 	        value: function closeMenu() {
 	            // Closes the menu
-	            document.querySelector('.nav').removeAttribute('style');
-	            document.querySelector('.site-wrapper').removeAttribute('style');
+	            _utilsJs2['default'].q('.nav').removeAttribute('style');
+	            _utilsJs2['default'].q('.site-wrapper').removeAttribute('style');
 	            document.body.className = document.body.className.replace('nav-opened', 'nav-closed');
 	        }
 	    }]);
@@ -994,6 +1002,89 @@
 	exports['default'] = touchMenu;
 	;
 	module.exports = exports['default'];
+
+/***/ },
+/* 22 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	var utils = (function () {
+	    function utils() {
+	        _classCallCheck(this, utils);
+	    }
+
+	    _createClass(utils, null, [{
+	        key: "q",
+
+	        /**
+	         * Queries for the first element in the document (alias: document.querySelector())
+	         *
+	         * @access public
+	         * @param string selector
+	         * @return element
+	         */
+	        value: function q(selector) {
+	            return document.querySelector(selector);
+	        }
+
+	        /**
+	         * Registers a callback function to listen for a given event (alias: document.body.addEventListener())
+	         *
+	         * @access public
+	         * @param string event
+	         * @param function callback
+	         * @param bool useCapture
+	         * @return void
+	         */
+	    }, {
+	        key: "listen",
+	        value: function listen(event, callback, useCapture) {
+	            return document.body.addEventListener(event, callback, useCapture);
+	        }
+
+	        /**
+	         * Dispatches the given Event
+	         *
+	         * @access public
+	         * @param Event event
+	         * @return void
+	         */
+	    }, {
+	        key: "dispatch",
+	        value: function dispatch(event) {
+	            document.body.dispatchEvent(event);
+	        }
+
+	        /**
+	         * Checks if the given element has the class
+	         *
+	         * @access public
+	         * @param element element
+	         * @param string className
+	         * @return bool
+	         */
+	    }, {
+	        key: "hasClass",
+	        value: function hasClass(element, className) {
+	            var r = new RegExp(className);
+	            return r.test(element.className);
+	        }
+	    }]);
+
+	    return utils;
+	})();
+
+	exports["default"] = utils;
+	module.exports = exports["default"];
 
 /***/ }
 /******/ ]);

@@ -1,3 +1,5 @@
+import utils from './utils.js';
+
 export default class touchMenu {
 
     constructor() {
@@ -10,7 +12,7 @@ export default class touchMenu {
         this._dragDistanceThreshold = 150;
         this._dragTimeThreshold = 200;
 
-        // Creat custom events
+        // Create custom events
         this._touchStartEvent = new Event('menu.touchstart');
         this._touchMoveEvent = new Event('menu.touchmove');
         this._touchEndEvent = new Event('menu.touchend');
@@ -18,55 +20,41 @@ export default class touchMenu {
         // If touch support is present
         if ( 'ontouchstart' in document.documentElement ) {
             // Bind the nav close button
-            document.querySelector('.nav-close').addEventListener('click', function(e) {
+            utils.q('.nav-close').addEventListener('click', function(e) {
                 _this.closeMenu();
             });
             // Bind the nav open button
-            document.querySelector('.menu-button').addEventListener('click', function(e) {
+            utils.q('.menu-button').addEventListener('click', function(e) {
                 _this.openMenu();
             });
             // Bind the content button (closes nav)
-            document.querySelector('.nav-cover').addEventListener('click', function(e) {
+            utils.q('.nav-cover').addEventListener('click', function(e) {
                 _this.closeMenu();
             });
+
             // Add the touchstart event
-            document.body.addEventListener('touchstart', function(e) {
-                var touch = e.changedTouches[0];
-                // Set the touch start position
-                _this._touchStartPosition = {
-                    time: new Date().getTime(),
-                    x: parseInt(touch.clientX, 10),
-                    y: parseInt(touch.clientY, 10)
-                };
+            utils.listen('touchstart', function(e) {
+                _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
                 // Run the document event "menu.touchstart"
-                document.body.dispatchEvent(_this._touchStartEvent);
+                utils.dispatch(_this._touchStartEvent);
             });
             // Add the touchmove event
-            document.body.addEventListener('touchmove', function(e) {
-                var touch = e.changedTouches[0];
+            utils.listen('touchmove', function(e) {
                 // Set the touch move position
-                _this._touchMovePosition = {
-                    time: new Date().getTime(),
-                    x: parseInt(touch.clientX, 10),
-                    y: parseInt(touch.clientY, 10)
-                };
+                _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
                 // Run the document event "menu.touchend"
-                document.body.dispatchEvent(_this._touchMoveEvent);
+                utils.dispatch(_this._touchMoveEvent);
             });
             // Add the touchend event
-            document.body.addEventListener('touchend', function(e) {
-                var touch = e.changedTouches[0];
+            utils.listen('touchend', function(e) {
                 // Set the touch end position
-                _this._touchEndPosition = {
-                    time: new Date().getTime(),
-                    x: parseInt(touch.clientX, 10),
-                    y: parseInt(touch.clientY, 10)
-                };
+                _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
                 // Run the document event "zoe.menu.touchend"
-                document.body.dispatchEvent(_this._touchEndEvent);
+                utils.dispatch(_this._touchEndEvent);
             });
+
             // Register the event handler for "menu.touchstart"
-            document.body.addEventListener('menu.touchmove', function(e) {
+            utils.listen('menu.touchmove', function(e) {
                 // If the nav is opened
                 if (_this.isNavOpened()) {
                     // Remove the transition duration
@@ -74,22 +62,22 @@ export default class touchMenu {
                 }
             }, false);
             // Register the event handler for "menu.touchmove"
-            document.body.addEventListener('menu.touchmove', function(e) {
+            utils.listen('menu.touchmove', function(e) {
                 // If the nav is opened
                 if (_this.isNavOpened()) {
                     var delta = _this.getDelta(_this._touchMovePosition);
                     // Only update if delta is positive
                     if (delta.x > 0) {
-                        var navWidth = $('.nav').width();
+                        var navWidth = utils.q('.nav').clientWidth;
                         // Update the nav position
-                        _this.setTransform(document.querySelector('.nav'), delta.x, 0, 0);
+                        _this.setTransform(utils.q('.nav'), delta.x, 0, 0);
                         // Update the site wrapper position
-                        _this.setTransform(document.querySelector('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
+                        _this.setTransform(utils.q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
                     }
                 }
             }, false);
             // Register the event handler for "menu.touchend"
-            document.body.addEventListener('menu.touchend', function(e) {
+            utils.listen('menu.touchend', function(e) {
                 // If the nav is opened
                 if (_this.isNavOpened()) {
                     // Add the transition duration
@@ -107,6 +95,22 @@ export default class touchMenu {
             }, false);
         }
     };
+
+    /**
+     * Retrieve the touch position/time
+     *
+     * @access public
+     * @param Touch touch
+     * @return void
+     */
+    getPosition(touch)
+    {
+        return {
+            time: new Date().getTime(),
+            x: parseInt(touch.clientX, 10),
+            y: parseInt(touch.clientY, 10)
+        };
+    }
 
     /**
      * Return an delta object of the touch positions
@@ -131,7 +135,7 @@ export default class touchMenu {
      */
     isNavOpened()
     {
-        return  /nav-opened/.test(document.body.className);
+        return utils.hasClass(document.body, 'nav-opened');
     };
 
     /**
@@ -144,11 +148,11 @@ export default class touchMenu {
     toggleTransition(flag)
     {
         if (flag) {
-            document.querySelector('.nav').style.webkitTransitionDuration = '0.3s';
-            document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0.3s';
+            utils.q('.nav').style.webkitTransitionDuration = '0.3s';
+            utils.q('.site-wrapper').style.webkitTransitionDuration = '0.3s';
         } else {
-            document.querySelector('.nav').style.webkitTransitionDuration = '0s';
-            document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0s';
+            utils.q('.nav').style.webkitTransitionDuration = '0s';
+            utils.q('.site-wrapper').style.webkitTransitionDuration = '0s';
         }
     }
 
@@ -175,8 +179,8 @@ export default class touchMenu {
      */
     openMenu()
     {
-        this.setTransform(document.querySelector('.nav'), 0, 0, 0);
-        this.setTransform(document.querySelector('.site-wrapper'), -240, 0, 0);
+        this.setTransform(utils.q('.nav'), 0, 0, 0);
+        this.setTransform(utils.q('.site-wrapper'), -240, 0, 0);
         document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
     }
 
@@ -189,8 +193,8 @@ export default class touchMenu {
     closeMenu()
     {
         // Closes the menu
-        document.querySelector('.nav').removeAttribute('style');
-        document.querySelector('.site-wrapper').removeAttribute('style');
+        utils.q('.nav').removeAttribute('style');
+        utils.q('.site-wrapper').removeAttribute('style');
         document.body.className = document.body.className.replace('nav-opened', 'nav-closed');
     };
 
