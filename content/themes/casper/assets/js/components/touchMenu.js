@@ -17,6 +17,18 @@ export default class touchMenu {
 
         // If touch support is present
         if ( 'ontouchstart' in document.documentElement ) {
+            // Bind the nav close button
+            document.querySelector('.nav-close').addEventListener('click', function(e) {
+                _this.closeMenu();
+            });
+            // Bind the nav open button
+            document.querySelector('.menu-button').addEventListener('click', function(e) {
+                _this.openMenu();
+            });
+            // Bind the content button (closes nav)
+            document.querySelector('.nav-cover').addEventListener('click', function(e) {
+                _this.closeMenu();
+            });
             // Add the touchstart event
             document.body.addEventListener('touchstart', function(e) {
                 var touch = e.changedTouches[0];
@@ -58,8 +70,7 @@ export default class touchMenu {
                 // If the nav is opened
                 if (_this.isNavOpened()) {
                     // Remove the transition duration
-                    $('.nav').css('transition-duration', '0');
-                    $('.site-wrapper').css('transition-duration', '0');
+                    _this.toggleTransition(false);
                 }
             }, false);
             // Register the event handler for "menu.touchmove"
@@ -71,9 +82,9 @@ export default class touchMenu {
                     if (delta.x > 0) {
                         var navWidth = $('.nav').width();
                         // Update the nav position
-                        $('.nav').css('transform', 'translate3D(' + delta.x + 'px, 0, 0)');
+                        _this.setTransform(document.querySelector('.nav'), delta.x, 0, 0);
                         // Update the site wrapper position
-                        $('.site-wrapper').css('transform', 'translate3D(' + (-1 * navWidth + delta.x) + 'px, 0, 0)');
+                        _this.setTransform(document.querySelector('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
                     }
                 }
             }, false);
@@ -82,18 +93,15 @@ export default class touchMenu {
                 // If the nav is opened
                 if (_this.isNavOpened()) {
                     // Add the transition duration
-                    $('.nav').css('transition-duration', '0.3s');
-                    $('.site-wrapper').css('transition-duration', '0.3s');
+                    _this.toggleTransition(true);
                     var delta = _this.getDelta(_this._touchEndPosition);
                     // If dragged over 100px within less than 100ms
                     if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
                         // Closes the menu
-                        $('.nav, .site-wrapper').removeAttr('style');
-                        $('body').toggleClass('nav-opened nav-closed');
+                        _this.closeMenu();
                     } else {
                         // Opens the menu
-                        $('.nav').css('transform', 'translate3D(0, 0, 0)');
-                        $('.site-wrapper').css('transform', 'translate3D(-240px, 0, 0)');
+                        _this.openMenu();
                     }
                 }
             }, false);
@@ -123,7 +131,67 @@ export default class touchMenu {
      */
     isNavOpened()
     {
-        return $('body').hasClass('nav-opened');
+        return  /nav-opened/.test(document.body.className);
+    };
+
+    /**
+     * Enables or disables the transition duration
+     *
+     * @access public
+     * @param bool flag             Set to true to turn on or off
+     * @return void
+     */
+    toggleTransition(flag)
+    {
+        if (flag) {
+            document.querySelector('.nav').style.webkitTransitionDuration = '0.3s';
+            document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0.3s';
+        } else {
+            document.querySelector('.nav').style.webkitTransitionDuration = '0s';
+            document.querySelector('.site-wrapper').style.webkitTransitionDuration = '0s';
+        }
+    }
+
+    /**
+     * Sets the transform for the given element
+     *
+     * @access public
+     * @param element element
+     * @param int x
+     * @param int y
+     * @param int z
+     * @return void
+     */
+    setTransform(element, x, y, z)
+    {
+        element.style.webkitTransform = 'translate3D(' + x + 'px, ' + y + 'px, ' + z + 'px)';
+    }
+
+    /**
+     * Opens the nav menu
+     *
+     * @access public
+     * @return void
+     */
+    openMenu()
+    {
+        this.setTransform(document.querySelector('.nav'), 0, 0, 0);
+        this.setTransform(document.querySelector('.site-wrapper'), -240, 0, 0);
+        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+    }
+
+    /**
+     * Closes the nav menu
+     *
+     * @access public
+     * @return void
+     */
+    closeMenu()
+    {
+        // Closes the menu
+        document.querySelector('.nav').removeAttribute('style');
+        document.querySelector('.site-wrapper').removeAttribute('style');
+        document.body.className = document.body.className.replace('nav-opened', 'nav-closed');
     };
 
 };
