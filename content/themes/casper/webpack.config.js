@@ -1,15 +1,13 @@
 var path = require('path');
 var webpack = require('webpack');
-
-// Import components
 var autoprefixer = require('autoprefixer');
 
 module.exports = {
     entry: [
-        path.join(__dirname, './assets/js/webpack.entry.js')
+        path.join(__dirname, '/assets/js/webpack.entry.js')
     ],
     output: {
-        path: __dirname + '/assets/dist',
+        path: path.join(__dirname, '/assets/dist'),
         filename: 'bundle.js'
     },
     module: {
