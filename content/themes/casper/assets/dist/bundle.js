@@ -800,6 +800,7 @@
 	        this._touchEndPosition = 0;
 	        this._dragDistanceThreshold = 150;
 	        this._dragTimeThreshold = 200;
+	        this._dragType = false;
 
 	        // Create custom events
 	        this._touchStartEvent = new Event('menu.touchstart');
@@ -843,17 +844,20 @@
 	            });
 
 	            // Register the event handler for "menu.touchstart"
-	            _utilsJs2['default'].listen('menu.touchmove', function (e) {
-	                // If the nav is opened
+	            _utilsJs2['default'].listen('menu.touchstart', function (e) {
+	                // Set the drag type based on if the user is opening or closing
 	                if (_this.isNavOpened()) {
-	                    // Remove the transition duration
-	                    _this.toggleTransition(false);
+	                    _this._dragType = 'closing';
+	                } else {
+	                    _this._dragType = 'opening';
 	                }
+	                // Remove the transition duration
+	                _this.toggleTransition(false);
 	            }, false);
 	            // Register the event handler for "menu.touchmove"
 	            _utilsJs2['default'].listen('menu.touchmove', function (e) {
 	                // If the nav is opened
-	                if (_this.isNavOpened()) {
+	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
 	                    var delta = _this.getDelta(_this._touchMovePosition);
 	                    // Only update if delta is positive
 	                    if (delta.x > 0) {
@@ -863,12 +867,24 @@
 	                        // Update the site wrapper position
 	                        _this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
 	                    }
+	                } else if (_this._dragType === 'opening') {
+	                    var delta = _this.getDelta(_this._touchMovePosition);
+	                    // Only update if delta is positive
+	                    if (delta.x < 0) {
+	                        var navWidth = _utilsJs2['default'].q('.nav').clientWidth;
+	                        // Show the menu
+	                        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+	                        // Update the nav position
+	                        _this.setTransform(_utilsJs2['default'].q('.nav'), navWidth + delta.x, 0, 0);
+	                        // Update the site wrapper position
+	                        _this.setTransform(_utilsJs2['default'].q('.site-wrapper'), delta.x, 0, 0);
+	                    }
 	                }
 	            }, false);
 	            // Register the event handler for "menu.touchend"
 	            _utilsJs2['default'].listen('menu.touchend', function (e) {
 	                // If the nav is opened
-	                if (_this.isNavOpened()) {
+	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
 	                    // Add the transition duration
 	                    _this.toggleTransition(true);
 	                    var delta = _this.getDelta(_this._touchEndPosition);
@@ -880,7 +896,22 @@
 	                        // Opens the menu
 	                        _this.openMenu();
 	                    }
+	                } else if (_this._dragType === 'opening') {
+	                    console.log('should it open?');
+	                    // Add the transition duration
+	                    _this.toggleTransition(true);
+	                    var delta = _this.getDelta(_this._touchEndPosition);
+	                    // If dragged over 100px within less than 100ms
+	                    if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
+	                        // Opens the menu
+	                        _this.openMenu();
+	                    } else {
+	                        // Closes the menu
+	                        _this.closeMenu();
+	                    }
 	                }
+	                // Reset the drag type
+	                _this._dragType = false;
 	            }, false);
 	        }
 	    }

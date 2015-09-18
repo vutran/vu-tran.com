@@ -11,6 +11,7 @@ export default class touchMenu {
         this._touchEndPosition = 0;
         this._dragDistanceThreshold = 150;
         this._dragTimeThreshold = 200;
+        this._dragType = false;
 
         // Create custom events
         this._touchStartEvent = new Event('menu.touchstart');
@@ -54,35 +55,50 @@ export default class touchMenu {
             });
 
             // Register the event handler for "menu.touchstart"
-            utils.listen('menu.touchmove', function(e) {
-                // If the nav is opened
+            utils.listen('menu.touchstart', function(e) {
+                // Set the drag type based on if the user is opening or closing
                 if (_this.isNavOpened()) {
-                    // Remove the transition duration
-                    _this.toggleTransition(false);
+                    _this._dragType = 'closing';
+                } else {
+                    _this._dragType = 'opening';
                 }
+                // Remove the transition duration
+                _this.toggleTransition(false);
             }, false);
             // Register the event handler for "menu.touchmove"
             utils.listen('menu.touchmove', function(e) {
                 // If the nav is opened
-                if (_this.isNavOpened()) {
-                    var delta = _this.getDelta(_this._touchMovePosition);
+                if (_this._dragType === 'closing' && _this.isNavOpened()) {
+                    let delta = _this.getDelta(_this._touchMovePosition);
                     // Only update if delta is positive
                     if (delta.x > 0) {
-                        var navWidth = utils.q('.nav').clientWidth;
+                        let navWidth = utils.q('.nav').clientWidth;
                         // Update the nav position
                         _this.setTransform(utils.q('.nav'), delta.x, 0, 0);
                         // Update the site wrapper position
                         _this.setTransform(utils.q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
+                    }
+                } else if (_this._dragType === 'opening') {
+                    let delta = _this.getDelta(_this._touchMovePosition);
+                    // Only update if delta is positive
+                    if (delta.x < 0) {
+                        let navWidth = utils.q('.nav').clientWidth;
+                        // Show the menu
+                        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+                        // Update the nav position
+                        _this.setTransform(utils.q('.nav'), (navWidth + delta.x), 0, 0);
+                        // Update the site wrapper position
+                        _this.setTransform(utils.q('.site-wrapper'), delta.x, 0, 0);
                     }
                 }
             }, false);
             // Register the event handler for "menu.touchend"
             utils.listen('menu.touchend', function(e) {
                 // If the nav is opened
-                if (_this.isNavOpened()) {
+                if (_this._dragType === 'closing' && _this.isNavOpened()) {
                     // Add the transition duration
                     _this.toggleTransition(true);
-                    var delta = _this.getDelta(_this._touchEndPosition);
+                    let delta = _this.getDelta(_this._touchEndPosition);
                     // If dragged over 100px within less than 100ms
                     if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
                         // Closes the menu
@@ -91,7 +107,22 @@ export default class touchMenu {
                         // Opens the menu
                         _this.openMenu();
                     }
+                } else if (_this._dragType === 'opening') {
+                    console.log('should it open?');
+                    // Add the transition duration
+                    _this.toggleTransition(true);
+                    let delta = _this.getDelta(_this._touchEndPosition);
+                    // If dragged over 100px within less than 100ms
+                    if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
+                        // Opens the menu
+                        _this.openMenu();
+                    } else {
+                        // Closes the menu
+                        _this.closeMenu();
+                    }
                 }
+                // Reset the drag type
+                _this._dragType = false;
             }, false);
         }
     };
