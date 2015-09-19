@@ -802,18 +802,17 @@
 	        this._dragTimeThreshold = 200;
 	        this._dragType = false;
 
-	        // Bind the nav close button
-	        _utilsJs2['default'].q('.nav-close').addEventListener('click', function (e) {
-	            _this.closeMenu();
+	        // Bind menu open/close triggers
+	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.nav-close'), 'click', function (e) {
+	            return _this.closeMenu();
 	        });
-	        // Bind the nav open button
-	        _utilsJs2['default'].q('.menu-button').addEventListener('click', function (e) {
-	            _this.openMenu();
+	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.menu-button'), 'click', function (e) {
+	            return _this.openMenu();
 	        });
-	        // Bind the content button (closes nav)
-	        _utilsJs2['default'].q('.nav-cover').addEventListener('click', function (e) {
-	            _this.closeMenu();
+	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.nav-cover'), 'click', function (e) {
+	            return _this.closeMenu();
 	        });
+
 	        // If touch support is present
 	        if ('ontouchstart' in document.documentElement) {
 	            // Create custom events
@@ -822,28 +821,28 @@
 	            this._touchEndEvent = new Event('menu.touchend');
 
 	            // Add the touchstart event
-	            _utilsJs2['default'].listen('touchstart', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'touchstart', function (e) {
 	                _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
 	                // Run the document event "menu.touchstart"
 	                _utilsJs2['default'].dispatch(_this._touchStartEvent);
 	            });
 	            // Add the touchmove event
-	            _utilsJs2['default'].listen('touchmove', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'touchmove', function (e) {
 	                // Set the touch move position
 	                _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
 	                // Run the document event "menu.touchend"
 	                _utilsJs2['default'].dispatch(_this._touchMoveEvent);
 	            });
 	            // Add the touchend event
-	            _utilsJs2['default'].listen('touchend', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'touchend', function (e) {
 	                // Set the touch end position
 	                _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
-	                // Run the document event "zoe.menu.touchend"
+	                // Run the document event "menu.touchend"
 	                _utilsJs2['default'].dispatch(_this._touchEndEvent);
 	            });
 
 	            // Register the event handler for "menu.touchstart"
-	            _utilsJs2['default'].listen('menu.touchstart', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'menu.touchstart', function (e) {
 	                // Set the drag type based on if the user is opening or closing
 	                if (_this.isNavOpened()) {
 	                    _this._dragType = 'closing';
@@ -854,7 +853,7 @@
 	                _this.toggleTransition(false);
 	            }, false);
 	            // Register the event handler for "menu.touchmove"
-	            _utilsJs2['default'].listen('menu.touchmove', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'menu.touchmove', function (e) {
 	                // If the nav is opened
 	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
 	                    var delta = _this.getDelta(_this._touchMovePosition);
@@ -868,11 +867,14 @@
 	                    }
 	                } else if (_this._dragType === 'opening') {
 	                    var delta = _this.getDelta(_this._touchMovePosition);
-	                    // Only update if delta is positive
+	                    // Only update if delta is negative
 	                    if (delta.x < 0) {
 	                        var navWidth = _utilsJs2['default'].q('.nav').clientWidth;
 	                        // Show the menu
-	                        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+	                        if (!_this.isNavOpened()) {
+	                            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
+	                            _utilsJs2['default'].addClass(document.body, 'nav-opened');
+	                        }
 	                        // Update the nav position
 	                        _this.setTransform(_utilsJs2['default'].q('.nav'), navWidth + delta.x, 0, 0);
 	                        // Update the site wrapper position
@@ -881,32 +883,39 @@
 	                }
 	            }, false);
 	            // Register the event handler for "menu.touchend"
-	            _utilsJs2['default'].listen('menu.touchend', function (e) {
+	            _utilsJs2['default'].listen(document.body, 'menu.touchend', function (e) {
 	                // If the nav is opened
 	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
 	                    // Add the transition duration
 	                    _this.toggleTransition(true);
+	                    // Retrieve the delta positions
 	                    var delta = _this.getDelta(_this._touchEndPosition);
-	                    // If dragged over 100px within less than 100ms
-	                    if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
-	                        // Closes the menu
-	                        _this.closeMenu();
-	                    } else {
-	                        // Opens the menu
-	                        _this.openMenu();
+	                    // Only update if delta is positive
+	                    if (delta.x > 0) {
+	                        // If dragged over 100px within less than 100ms
+	                        if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
+	                            // Closes the menu
+	                            _this.closeMenu();
+	                        } else {
+	                            // Opens the menu
+	                            _this.openMenu();
+	                        }
 	                    }
 	                } else if (_this._dragType === 'opening') {
-	                    console.log('should it open?');
 	                    // Add the transition duration
 	                    _this.toggleTransition(true);
+	                    // Retrieve the delta positions
 	                    var delta = _this.getDelta(_this._touchEndPosition);
-	                    // If dragged over 100px within less than 100ms
-	                    if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
-	                        // Opens the menu
-	                        _this.openMenu();
-	                    } else {
-	                        // Closes the menu
-	                        _this.closeMenu();
+	                    // Only update if delta is negative
+	                    if (delta.x < 0) {
+	                        // If dragged over 100px within less than 100ms
+	                        if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
+	                            // Opens the menu
+	                            _this.openMenu();
+	                        } else {
+	                            // Closes the menu
+	                            _this.closeMenu();
+	                        }
 	                    }
 	                }
 	                // Reset the drag type
@@ -1007,7 +1016,10 @@
 	        value: function openMenu() {
 	            this.setTransform(_utilsJs2['default'].q('.nav'), 0, 0, 0);
 	            this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -240, 0, 0);
-	            document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+	            // Replace classes
+	            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
+	            _utilsJs2['default'].removeClass(document.body, 'nav-opened');
+	            _utilsJs2['default'].addClass(document.body, 'nav-opened');
 	        }
 
 	        /**
@@ -1022,7 +1034,10 @@
 	            // Closes the menu
 	            _utilsJs2['default'].q('.nav').removeAttribute('style');
 	            _utilsJs2['default'].q('.site-wrapper').removeAttribute('style');
-	            document.body.className = document.body.className.replace('nav-opened', 'nav-closed');
+	            // Replace classes
+	            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
+	            _utilsJs2['default'].removeClass(document.body, 'nav-opened');
+	            _utilsJs2['default'].addClass(document.body, 'nav-closed');
 	        }
 	    }]);
 
@@ -1037,15 +1052,15 @@
 /* 22 */
 /***/ function(module, exports) {
 
-	"use strict";
+	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
+	Object.defineProperty(exports, '__esModule', {
 	    value: true
 	});
 
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 	var utils = (function () {
 	    function utils() {
@@ -1053,7 +1068,7 @@
 	    }
 
 	    _createClass(utils, null, [{
-	        key: "q",
+	        key: 'q',
 
 	        /**
 	         * Queries for the first element in the document (alias: document.querySelector())
@@ -1070,15 +1085,16 @@
 	         * Registers a callback function to listen for a given event (alias: document.body.addEventListener())
 	         *
 	         * @access public
+	         * @param element element
 	         * @param string event
 	         * @param function callback
 	         * @param bool useCapture
 	         * @return void
 	         */
 	    }, {
-	        key: "listen",
-	        value: function listen(event, callback, useCapture) {
-	            return document.body.addEventListener(event, callback, useCapture);
+	        key: 'listen',
+	        value: function listen(element, event, callback, useCapture) {
+	            return element.addEventListener(event, callback, useCapture);
 	        }
 
 	        /**
@@ -1089,7 +1105,7 @@
 	         * @return void
 	         */
 	    }, {
-	        key: "dispatch",
+	        key: 'dispatch',
 	        value: function dispatch(event) {
 	            document.body.dispatchEvent(event);
 	        }
@@ -1103,18 +1119,46 @@
 	         * @return bool
 	         */
 	    }, {
-	        key: "hasClass",
+	        key: 'hasClass',
 	        value: function hasClass(element, className) {
 	            var r = new RegExp(className);
 	            return r.test(element.className);
+	        }
+
+	        /**
+	         * Removes the CSS class to the given element
+	         *
+	         * @access public
+	         * @param element element
+	         * @param string className
+	         * @return void
+	         */
+	    }, {
+	        key: 'removeClass',
+	        value: function removeClass(element, className) {
+	            element.className = element.className.replace(className, '');
+	        }
+
+	        /**
+	         * Appends the CSS class to the given element
+	         *
+	         * @access public
+	         * @param element element
+	         * @param string className
+	         * @return void
+	         */
+	    }, {
+	        key: 'addClass',
+	        value: function addClass(element, className) {
+	            element.className += ' ' + className;
 	        }
 	    }]);
 
 	    return utils;
 	})();
 
-	exports["default"] = utils;
-	module.exports = exports["default"];
+	exports['default'] = utils;
+	module.exports = exports['default'];
 
 /***/ }
 /******/ ]);

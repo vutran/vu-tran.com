@@ -16,14 +16,15 @@ export default class utils {
      * Registers a callback function to listen for a given event (alias: document.body.addEventListener())
      *
      * @access public
+     * @param element element
      * @param string event
      * @param function callback
      * @param bool useCapture
      * @return void
      */
-    static listen(event, callback, useCapture)
+    static listen(element, event, callback, useCapture)
     {
-        return document.body.addEventListener(event, callback, useCapture);
+        return element.addEventListener(event, callback, useCapture);
     }
 
     /**
@@ -50,6 +51,32 @@ export default class utils {
     {
         var r = new RegExp(className);
         return r.test(element.className);
+    }
+
+    /**
+     * Removes the CSS class to the given element
+     *
+     * @access public
+     * @param element element
+     * @param string className
+     * @return void
+     */
+    static removeClass(element, className)
+    {
+        element.className = element.className.replace(className, '');
+    }
+
+    /**
+     * Appends the CSS class to the given element
+     *
+     * @access public
+     * @param element element
+     * @param string className
+     * @return void
+     */
+    static addClass(element, className)
+    {
+        element.className += ` ${className}`;
     }
 
 }

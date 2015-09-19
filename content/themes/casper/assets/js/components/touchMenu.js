@@ -13,18 +13,11 @@ export default class touchMenu {
         this._dragTimeThreshold = 200;
         this._dragType = false;
 
-        // Bind the nav close button
-        utils.q('.nav-close').addEventListener('click', function(e) {
-            _this.closeMenu();
-        });
-        // Bind the nav open button
-        utils.q('.menu-button').addEventListener('click', function(e) {
-            _this.openMenu();
-        });
-        // Bind the content button (closes nav)
-        utils.q('.nav-cover').addEventListener('click', function(e) {
-            _this.closeMenu();
-        });
+        // Bind menu open/close triggers
+        utils.listen(utils.q('.nav-close'), 'click', e => _this.closeMenu());
+        utils.listen(utils.q('.menu-button'), 'click', e => _this.openMenu());
+        utils.listen(utils.q('.nav-cover'), 'click', e => _this.closeMenu());
+
         // If touch support is present
         if ( 'ontouchstart' in document.documentElement ) {
             // Create custom events
@@ -33,28 +26,28 @@ export default class touchMenu {
             this._touchEndEvent = new Event('menu.touchend');
 
             // Add the touchstart event
-            utils.listen('touchstart', function(e) {
+            utils.listen(document.body, 'touchstart', e => {
                 _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
                 // Run the document event "menu.touchstart"
                 utils.dispatch(_this._touchStartEvent);
             });
             // Add the touchmove event
-            utils.listen('touchmove', function(e) {
+            utils.listen(document.body, 'touchmove', e => {
                 // Set the touch move position
                 _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
                 // Run the document event "menu.touchend"
                 utils.dispatch(_this._touchMoveEvent);
             });
             // Add the touchend event
-            utils.listen('touchend', function(e) {
+            utils.listen(document.body, 'touchend', e => {
                 // Set the touch end position
                 _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
-                // Run the document event "zoe.menu.touchend"
+                // Run the document event "menu.touchend"
                 utils.dispatch(_this._touchEndEvent);
             });
 
             // Register the event handler for "menu.touchstart"
-            utils.listen('menu.touchstart', function(e) {
+            utils.listen(document.body, 'menu.touchstart', e => {
                 // Set the drag type based on if the user is opening or closing
                 if (_this.isNavOpened()) {
                     _this._dragType = 'closing';
@@ -65,7 +58,7 @@ export default class touchMenu {
                 _this.toggleTransition(false);
             }, false);
             // Register the event handler for "menu.touchmove"
-            utils.listen('menu.touchmove', function(e) {
+            utils.listen(document.body, 'menu.touchmove', e => {
                 // If the nav is opened
                 if (_this._dragType === 'closing' && _this.isNavOpened()) {
                     let delta = _this.getDelta(_this._touchMovePosition);
@@ -79,11 +72,14 @@ export default class touchMenu {
                     }
                 } else if (_this._dragType === 'opening') {
                     let delta = _this.getDelta(_this._touchMovePosition);
-                    // Only update if delta is positive
+                    // Only update if delta is negative
                     if (delta.x < 0) {
                         let navWidth = utils.q('.nav').clientWidth;
                         // Show the menu
-                        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+                        if (!_this.isNavOpened()) {
+                            utils.removeClass(document.body, 'nav-closed');
+                            utils.addClass(document.body, 'nav-opened');
+                        }
                         // Update the nav position
                         _this.setTransform(utils.q('.nav'), (navWidth + delta.x), 0, 0);
                         // Update the site wrapper position
@@ -92,32 +88,39 @@ export default class touchMenu {
                 }
             }, false);
             // Register the event handler for "menu.touchend"
-            utils.listen('menu.touchend', function(e) {
+            utils.listen(document.body, 'menu.touchend', e => {
                 // If the nav is opened
                 if (_this._dragType === 'closing' && _this.isNavOpened()) {
                     // Add the transition duration
                     _this.toggleTransition(true);
+                    // Retrieve the delta positions
                     let delta = _this.getDelta(_this._touchEndPosition);
-                    // If dragged over 100px within less than 100ms
-                    if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
-                        // Closes the menu
-                        _this.closeMenu();
-                    } else {
-                        // Opens the menu
-                        _this.openMenu();
+                    // Only update if delta is positive
+                    if (delta.x > 0) {
+                        // If dragged over 100px within less than 100ms
+                        if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
+                            // Closes the menu
+                            _this.closeMenu();
+                        } else {
+                            // Opens the menu
+                            _this.openMenu();
+                        }
                     }
                 } else if (_this._dragType === 'opening') {
-                    console.log('should it open?');
                     // Add the transition duration
                     _this.toggleTransition(true);
+                    // Retrieve the delta positions
                     let delta = _this.getDelta(_this._touchEndPosition);
-                    // If dragged over 100px within less than 100ms
-                    if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
-                        // Opens the menu
-                        _this.openMenu();
-                    } else {
-                        // Closes the menu
-                        _this.closeMenu();
+                    // Only update if delta is negative
+                    if (delta.x < 0) {
+                        // If dragged over 100px within less than 100ms
+                        if ((Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold) || Math.abs(delta.x) > _this._dragDistanceThreshold ) {
+                            // Opens the menu
+                            _this.openMenu();
+                        } else {
+                            // Closes the menu
+                            _this.closeMenu();
+                        }
                     }
                 }
                 // Reset the drag type
@@ -211,7 +214,10 @@ export default class touchMenu {
     {
         this.setTransform(utils.q('.nav'), 0, 0, 0);
         this.setTransform(utils.q('.site-wrapper'), -240, 0, 0);
-        document.body.className = document.body.className.replace('nav-closed', 'nav-opened');
+        // Replace classes
+        utils.removeClass(document.body, 'nav-closed');
+        utils.removeClass(document.body, 'nav-opened');
+        utils.addClass(document.body, 'nav-opened');
     }
 
     /**
@@ -225,7 +231,10 @@ export default class touchMenu {
         // Closes the menu
         utils.q('.nav').removeAttribute('style');
         utils.q('.site-wrapper').removeAttribute('style');
-        document.body.className = document.body.className.replace('nav-opened', 'nav-closed');
+        // Replace classes
+        utils.removeClass(document.body, 'nav-closed');
+        utils.removeClass(document.body, 'nav-opened');
+        utils.addClass(document.body, 'nav-closed');
     };
 
 };
