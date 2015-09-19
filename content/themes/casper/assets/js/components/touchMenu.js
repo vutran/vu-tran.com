@@ -198,7 +198,7 @@ export default class touchMenu {
      */
     setTransform(element, x, y, z)
     {
-        element.style.webkitTransform = 'translate3D(' + x + 'px, ' + y + 'px, ' + z + 'px)';
+        element.style.webkitTransform = `translate3D(${x}px, ${y}px, ${z}px)`;
     }
 
     /**
