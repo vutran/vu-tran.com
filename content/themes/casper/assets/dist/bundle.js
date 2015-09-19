@@ -76,7 +76,16 @@
 
 	var _componentsTouchMenuJs2 = _interopRequireDefault(_componentsTouchMenuJs);
 
-	new _componentsTouchMenuJs2['default']();
+	// Instantiate the touch menu
+	var tm = new _componentsTouchMenuJs2['default']({
+	    bodyOpenedClass: 'nav-opened',
+	    bodyClosedClass: 'nav-closed',
+	    closeButton: '.nav-close',
+	    openButton: '.menu-button',
+	    nav: '.nav',
+	    content: '.site-wrapper'
+	});
+	tm.init();
 
 /***/ },
 /* 2 */
@@ -789,10 +798,16 @@
 	var _utilsJs2 = _interopRequireDefault(_utilsJs);
 
 	var touchMenu = (function () {
-	    function touchMenu() {
+	    function touchMenu(options) {
 	        _classCallCheck(this, touchMenu);
 
-	        var _this = this;
+	        // Configurable options
+	        this._closeButton = _utilsJs2['default'].q(options.closeButton) || false;
+	        this._openButton = _utilsJs2['default'].q(options.openButton) || false;
+	        this._nav = _utilsJs2['default'].q(options.nav) || false;
+	        this._content = _utilsJs2['default'].q(options.content) || false;
+	        this._bodyOpenedClass = options.bodyOpenedClass || '';
+	        this._bodyClosedClass = options.bodyClosedClass || '';
 
 	        // Properties
 	        this._touchStartPosition = 0;
@@ -801,130 +816,216 @@
 	        this._dragDistanceThreshold = 150;
 	        this._dragTimeThreshold = 200;
 	        this._dragType = false;
-
-	        // Bind menu open/close triggers
-	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.nav-close'), 'click', function (e) {
-	            return _this.closeMenu();
-	        });
-	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.menu-button'), 'click', function (e) {
-	            return _this.openMenu();
-	        });
-	        _utilsJs2['default'].listen(_utilsJs2['default'].q('.nav-cover'), 'click', function (e) {
-	            return _this.closeMenu();
-	        });
-
-	        // If touch support is present
-	        if ('ontouchstart' in document.documentElement) {
-	            // Create custom events
-	            this._touchStartEvent = new Event('menu.touchstart');
-	            this._touchMoveEvent = new Event('menu.touchmove');
-	            this._touchEndEvent = new Event('menu.touchend');
-
-	            // Add the touchstart event
-	            _utilsJs2['default'].listen(document.body, 'touchstart', function (e) {
-	                _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
-	                // Run the document event "menu.touchstart"
-	                _utilsJs2['default'].dispatch(_this._touchStartEvent);
-	            });
-	            // Add the touchmove event
-	            _utilsJs2['default'].listen(document.body, 'touchmove', function (e) {
-	                // Set the touch move position
-	                _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
-	                // Run the document event "menu.touchend"
-	                _utilsJs2['default'].dispatch(_this._touchMoveEvent);
-	            });
-	            // Add the touchend event
-	            _utilsJs2['default'].listen(document.body, 'touchend', function (e) {
-	                // Set the touch end position
-	                _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
-	                // Run the document event "menu.touchend"
-	                _utilsJs2['default'].dispatch(_this._touchEndEvent);
-	            });
-
-	            // Register the event handler for "menu.touchstart"
-	            _utilsJs2['default'].listen(document.body, 'menu.touchstart', function (e) {
-	                // Set the drag type based on if the user is opening or closing
-	                if (_this.isNavOpened()) {
-	                    _this._dragType = 'closing';
-	                } else {
-	                    _this._dragType = 'opening';
-	                }
-	                // Remove the transition duration
-	                _this.toggleTransition(false);
-	            }, false);
-	            // Register the event handler for "menu.touchmove"
-	            _utilsJs2['default'].listen(document.body, 'menu.touchmove', function (e) {
-	                // If the nav is opened
-	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
-	                    var delta = _this.getDelta(_this._touchMovePosition);
-	                    // Only update if delta is positive
-	                    if (delta.x > 0) {
-	                        var navWidth = _utilsJs2['default'].q('.nav').clientWidth;
-	                        // Update the nav position
-	                        _this.setTransform(_utilsJs2['default'].q('.nav'), delta.x, 0, 0);
-	                        // Update the site wrapper position
-	                        _this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
-	                    }
-	                } else if (_this._dragType === 'opening') {
-	                    var delta = _this.getDelta(_this._touchMovePosition);
-	                    // Only update if delta is negative
-	                    if (delta.x < 0) {
-	                        var navWidth = _utilsJs2['default'].q('.nav').clientWidth;
-	                        // Show the menu
-	                        if (!_this.isNavOpened()) {
-	                            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
-	                            _utilsJs2['default'].addClass(document.body, 'nav-opened');
-	                        }
-	                        // Update the nav position
-	                        _this.setTransform(_utilsJs2['default'].q('.nav'), navWidth + delta.x, 0, 0);
-	                        // Update the site wrapper position
-	                        _this.setTransform(_utilsJs2['default'].q('.site-wrapper'), delta.x, 0, 0);
-	                    }
-	                }
-	            }, false);
-	            // Register the event handler for "menu.touchend"
-	            _utilsJs2['default'].listen(document.body, 'menu.touchend', function (e) {
-	                // If the nav is opened
-	                if (_this._dragType === 'closing' && _this.isNavOpened()) {
-	                    // Add the transition duration
-	                    _this.toggleTransition(true);
-	                    // Retrieve the delta positions
-	                    var delta = _this.getDelta(_this._touchEndPosition);
-	                    // Only update if delta is positive
-	                    if (delta.x > 0) {
-	                        // If dragged over 100px within less than 100ms
-	                        if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
-	                            // Closes the menu
-	                            _this.closeMenu();
-	                        } else {
-	                            // Opens the menu
-	                            _this.openMenu();
-	                        }
-	                    }
-	                } else if (_this._dragType === 'opening') {
-	                    // Add the transition duration
-	                    _this.toggleTransition(true);
-	                    // Retrieve the delta positions
-	                    var delta = _this.getDelta(_this._touchEndPosition);
-	                    // Only update if delta is negative
-	                    if (delta.x < 0) {
-	                        // If dragged over 100px within less than 100ms
-	                        if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
-	                            // Opens the menu
-	                            _this.openMenu();
-	                        } else {
-	                            // Closes the menu
-	                            _this.closeMenu();
-	                        }
-	                    }
-	                }
-	                // Reset the drag type
-	                _this._dragType = false;
-	            }, false);
-	        }
 	    }
 
+	    /**
+	     * Initializes the event handlers
+	     *
+	     * @access public
+	     * @return void
+	     */
+
 	    _createClass(touchMenu, [{
+	        key: 'init',
+	        value: function init() {
+	            var _this2 = this;
+
+	            var _this = this;
+
+	            // Bind menu open/close triggers
+	            _utilsJs2['default'].listen(_this.getCloseButton(), 'click', function (e) {
+	                return _this.closeMenu();
+	            });
+	            _utilsJs2['default'].listen(_this.getOpenButton(), 'click', function (e) {
+	                return _this.openMenu();
+	            });
+	            _utilsJs2['default'].listen(_utilsJs2['default'].q('.nav-cover'), 'click', function (e) {
+	                return _this.closeMenu();
+	            });
+
+	            // If touch support is present
+	            if ('ontouchstart' in document.documentElement) {
+	                // Create custom events
+	                this._touchStartEvent = new Event('menu.touchstart');
+	                this._touchMoveEvent = new Event('menu.touchmove');
+	                this._touchEndEvent = new Event('menu.touchend');
+
+	                // Add the touchstart event
+	                _utilsJs2['default'].listen(document.body, 'touchstart', function (e) {
+	                    _this._touchStartPosition = _this.getPosition(e.changedTouches[0]);
+	                    // Run the document event "menu.touchstart"
+	                    _utilsJs2['default'].dispatch(_this._touchStartEvent);
+	                });
+	                // Add the touchmove event
+	                _utilsJs2['default'].listen(document.body, 'touchmove', function (e) {
+	                    // Set the touch move position
+	                    _this._touchMovePosition = _this.getPosition(e.changedTouches[0]);
+	                    // Run the document event "menu.touchend"
+	                    _utilsJs2['default'].dispatch(_this._touchMoveEvent);
+	                });
+	                // Add the touchend event
+	                _utilsJs2['default'].listen(document.body, 'touchend', function (e) {
+	                    // Set the touch end position
+	                    _this._touchEndPosition = _this.getPosition(e.changedTouches[0]);
+	                    // Run the document event "menu.touchend"
+	                    _utilsJs2['default'].dispatch(_this._touchEndEvent);
+	                });
+
+	                // Register the event handler for "menu.touchstart"
+	                _utilsJs2['default'].listen(document.body, 'menu.touchstart', function (e) {
+	                    // Set the drag type based on if the user is opening or closing
+	                    if (_this.isNavOpened()) {
+	                        _this._dragType = 'closing';
+	                    } else {
+	                        _this._dragType = 'opening';
+	                    }
+	                    // Remove the transition duration
+	                    _this.toggleTransition(false);
+	                }, false);
+	                // Register the event handler for "menu.touchmove"
+	                _utilsJs2['default'].listen(document.body, 'menu.touchmove', function (e) {
+	                    // If the nav is opened
+	                    if (_this._dragType === 'closing' && _this.isNavOpened()) {
+	                        var delta = _this.getDelta(_this._touchMovePosition);
+	                        // Only update if delta is positive
+	                        if (delta.x > 0) {
+	                            var navWidth = _this.getNav().clientWidth;
+	                            // Update the nav element position
+	                            _this.setTransform(_this.getNav(), delta.x, 0, 0);
+	                            // Update the content element position
+	                            _this.setTransform(_this.getContent(), -1 * navWidth + delta.x, 0, 0);
+	                        }
+	                    } else if (_this._dragType === 'opening') {
+	                        var delta = _this.getDelta(_this._touchMovePosition);
+	                        // Only update if delta is negative
+	                        if (delta.x < 0) {
+	                            var navWidth = _this.getNav().clientWidth;
+	                            // Show the menu
+	                            if (!_this.isNavOpened()) {
+	                                _utilsJs2['default'].removeClass(document.body, _this2.getBodyClosedClass());
+	                                _utilsJs2['default'].addClass(document.body, _this2.getBodyOpenedClass());
+	                            }
+	                            // Update the nav position
+	                            _this.setTransform(_this.getNav(), navWidth + delta.x, 0, 0);
+	                            // Update the site wrapper position
+	                            _this.setTransform(_this.getContent(), delta.x, 0, 0);
+	                        }
+	                    }
+	                }, false);
+	                // Register the event handler for "menu.touchend"
+	                _utilsJs2['default'].listen(document.body, 'menu.touchend', function (e) {
+	                    // If the nav is opened
+	                    if (_this._dragType === 'closing' && _this.isNavOpened()) {
+	                        // Add the transition duration
+	                        _this.toggleTransition(true);
+	                        // Retrieve the delta positions
+	                        var delta = _this.getDelta(_this._touchEndPosition);
+	                        // Only update if delta is positive
+	                        if (delta.x > 0) {
+	                            // If dragged over 100px within less than 100ms
+	                            if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
+	                                // Closes the menu
+	                                _this.closeMenu();
+	                            } else {
+	                                // Opens the menu
+	                                _this.openMenu();
+	                            }
+	                        }
+	                    } else if (_this._dragType === 'opening') {
+	                        // Add the transition duration
+	                        _this.toggleTransition(true);
+	                        // Retrieve the delta positions
+	                        var delta = _this.getDelta(_this._touchEndPosition);
+	                        // Only update if delta is negative
+	                        if (delta.x < 0) {
+	                            // If dragged over 100px within less than 100ms
+	                            if (Math.abs(delta.x / 2) > _this._dragDistanceThreshold && delta.time <= _this._dragTimeThreshold || Math.abs(delta.x) > _this._dragDistanceThreshold) {
+	                                // Opens the menu
+	                                _this.openMenu();
+	                            } else {
+	                                // Closes the menu
+	                                _this.closeMenu();
+	                            }
+	                        }
+	                    }
+	                    // Reset the drag type
+	                    _this._dragType = false;
+	                }, false);
+	            }
+	        }
+	    }, {
+	        key: 'getCloseButton',
+
+	        /**
+	         * Retrieve the close buttom element
+	         *
+	         * @access public
+	         * @return element
+	         */
+	        value: function getCloseButton() {
+	            return this._closeButton;
+	        }
+	    }, {
+	        key: 'getOpenButton',
+
+	        /**
+	         * Retrieve the open buttom element
+	         *
+	         * @access public
+	         * @return element
+	         */
+	        value: function getOpenButton() {
+	            return this._openButton;
+	        }
+	    }, {
+	        key: 'getNav',
+
+	        /**
+	         * Retrieve the nav element
+	         *
+	         * @access public
+	         * @return element
+	         */
+	        value: function getNav() {
+	            return this._nav;
+	        }
+	    }, {
+	        key: 'getContent',
+
+	        /**
+	         * Retrieve the content element
+	         *
+	         * @access public
+	         * @return element
+	         */
+	        value: function getContent() {
+	            return this._content;
+	        }
+	    }, {
+	        key: 'getBodyOpenedClass',
+
+	        /**
+	         * Retrieve the nav opened class for the body element
+	         *
+	         * @access public
+	         * @return string
+	         */
+	        value: function getBodyOpenedClass() {
+	            return this._bodyOpenedClass;
+	        }
+	    }, {
+	        key: 'getBodyClosedClass',
+
+	        /**
+	         * Retrieve the nav closed class for the body element
+	         *
+	         * @access public
+	         * @return string
+	         */
+	        value: function getBodyClosedClass() {
+	            return this._bodyClosedClass;
+	        }
+	    }, {
 	        key: 'getPosition',
 
 	        /**
@@ -967,7 +1068,7 @@
 	         * @return bool
 	         */
 	        value: function isNavOpened() {
-	            return _utilsJs2['default'].hasClass(document.body, 'nav-opened');
+	            return _utilsJs2['default'].hasClass(document.body, this.getBodyOpenedClass());
 	        }
 	    }, {
 	        key: 'toggleTransition',
@@ -981,11 +1082,11 @@
 	         */
 	        value: function toggleTransition(flag) {
 	            if (flag) {
-	                _utilsJs2['default'].q('.nav').style.webkitTransitionDuration = '0.3s';
-	                _utilsJs2['default'].q('.site-wrapper').style.webkitTransitionDuration = '0.3s';
+	                this.getNav().style.webkitTransitionDuration = '0.3s';
+	                this.getContent().style.webkitTransitionDuration = '0.3s';
 	            } else {
-	                _utilsJs2['default'].q('.nav').style.webkitTransitionDuration = '0s';
-	                _utilsJs2['default'].q('.site-wrapper').style.webkitTransitionDuration = '0s';
+	                this.getNav().style.webkitTransitionDuration = '0s';
+	                this.getContent().style.webkitTransitionDuration = '0s';
 	            }
 	        }
 
@@ -1014,12 +1115,12 @@
 	    }, {
 	        key: 'openMenu',
 	        value: function openMenu() {
-	            this.setTransform(_utilsJs2['default'].q('.nav'), 0, 0, 0);
-	            this.setTransform(_utilsJs2['default'].q('.site-wrapper'), -240, 0, 0);
+	            this.setTransform(this.getNav(), 0, 0, 0);
+	            this.setTransform(this.getContent(), -240, 0, 0);
 	            // Replace classes
-	            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
-	            _utilsJs2['default'].removeClass(document.body, 'nav-opened');
-	            _utilsJs2['default'].addClass(document.body, 'nav-opened');
+	            _utilsJs2['default'].removeClass(document.body, this.getBodyClosedClass());
+	            _utilsJs2['default'].removeClass(document.body, this.getBodyOpenedClass());
+	            _utilsJs2['default'].addClass(document.body, this.getBodyOpenedClass());
 	        }
 
 	        /**
@@ -1032,12 +1133,12 @@
 	        key: 'closeMenu',
 	        value: function closeMenu() {
 	            // Closes the menu
-	            _utilsJs2['default'].q('.nav').removeAttribute('style');
-	            _utilsJs2['default'].q('.site-wrapper').removeAttribute('style');
+	            this.getNav().removeAttribute('style');
+	            this.getContent().removeAttribute('style');
 	            // Replace classes
-	            _utilsJs2['default'].removeClass(document.body, 'nav-closed');
-	            _utilsJs2['default'].removeClass(document.body, 'nav-opened');
-	            _utilsJs2['default'].addClass(document.body, 'nav-closed');
+	            _utilsJs2['default'].removeClass(document.body, this.getBodyClosedClass());
+	            _utilsJs2['default'].removeClass(document.body, this.getBodyOpenedClass());
+	            _utilsJs2['default'].addClass(document.body, this.getBodyClosedClass());
 	        }
 	    }]);
 

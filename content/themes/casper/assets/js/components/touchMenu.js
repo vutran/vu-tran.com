@@ -2,8 +2,15 @@ import utils from './utils.js';
 
 export default class touchMenu {
 
-    constructor() {
-        let _this = this;
+    constructor(options) {
+
+        // Configurable options
+        this._closeButton = utils.q(options.closeButton) || false;
+        this._openButton = utils.q(options.openButton) || false;
+        this._nav = utils.q(options.nav) || false;
+        this._content = utils.q(options.content) || false;
+        this._bodyOpenedClass = options.bodyOpenedClass || '';
+        this._bodyClosedClass = options.bodyClosedClass || '';
 
         // Properties
         this._touchStartPosition = 0;
@@ -12,10 +19,20 @@ export default class touchMenu {
         this._dragDistanceThreshold = 150;
         this._dragTimeThreshold = 200;
         this._dragType = false;
+    }
+
+    /**
+     * Initializes the event handlers
+     *
+     * @access public
+     * @return void
+     */
+    init() {
+        let _this = this;
 
         // Bind menu open/close triggers
-        utils.listen(utils.q('.nav-close'), 'click', e => _this.closeMenu());
-        utils.listen(utils.q('.menu-button'), 'click', e => _this.openMenu());
+        utils.listen(_this.getCloseButton(), 'click', e => _this.closeMenu());
+        utils.listen(_this.getOpenButton(), 'click', e => _this.openMenu());
         utils.listen(utils.q('.nav-cover'), 'click', e => _this.closeMenu());
 
         // If touch support is present
@@ -64,26 +81,26 @@ export default class touchMenu {
                     let delta = _this.getDelta(_this._touchMovePosition);
                     // Only update if delta is positive
                     if (delta.x > 0) {
-                        let navWidth = utils.q('.nav').clientWidth;
-                        // Update the nav position
-                        _this.setTransform(utils.q('.nav'), delta.x, 0, 0);
-                        // Update the site wrapper position
-                        _this.setTransform(utils.q('.site-wrapper'), -1 * navWidth + delta.x, 0, 0);
+                        let navWidth = _this.getNav().clientWidth;
+                        // Update the nav element position
+                        _this.setTransform(_this.getNav(), delta.x, 0, 0);
+                        // Update the content element position
+                        _this.setTransform(_this.getContent(), -1 * navWidth + delta.x, 0, 0);
                     }
                 } else if (_this._dragType === 'opening') {
                     let delta = _this.getDelta(_this._touchMovePosition);
                     // Only update if delta is negative
                     if (delta.x < 0) {
-                        let navWidth = utils.q('.nav').clientWidth;
+                        let navWidth = _this.getNav().clientWidth;
                         // Show the menu
                         if (!_this.isNavOpened()) {
-                            utils.removeClass(document.body, 'nav-closed');
-                            utils.addClass(document.body, 'nav-opened');
+                            utils.removeClass(document.body, this.getBodyClosedClass());
+                            utils.addClass(document.body, this.getBodyOpenedClass());
                         }
                         // Update the nav position
-                        _this.setTransform(utils.q('.nav'), (navWidth + delta.x), 0, 0);
+                        _this.setTransform(_this.getNav(), (navWidth + delta.x), 0, 0);
                         // Update the site wrapper position
-                        _this.setTransform(utils.q('.site-wrapper'), delta.x, 0, 0);
+                        _this.setTransform(_this.getContent(), delta.x, 0, 0);
                     }
                 }
             }, false);
@@ -130,6 +147,72 @@ export default class touchMenu {
     };
 
     /**
+     * Retrieve the close buttom element
+     *
+     * @access public
+     * @return element
+     */
+    getCloseButton()
+    {
+        return this._closeButton;
+    };
+
+    /**
+     * Retrieve the open buttom element
+     *
+     * @access public
+     * @return element
+     */
+    getOpenButton()
+    {
+        return this._openButton;
+    };
+
+    /**
+     * Retrieve the nav element
+     *
+     * @access public
+     * @return element
+     */
+    getNav()
+    {
+        return this._nav;
+    };
+
+    /**
+     * Retrieve the content element
+     *
+     * @access public
+     * @return element
+     */
+    getContent()
+    {
+        return this._content;
+    };
+
+    /**
+     * Retrieve the nav opened class for the body element
+     *
+     * @access public
+     * @return string
+     */
+    getBodyOpenedClass()
+    {
+        return this._bodyOpenedClass;
+    };
+
+    /**
+     * Retrieve the nav closed class for the body element
+     *
+     * @access public
+     * @return string
+     */
+    getBodyClosedClass()
+    {
+        return this._bodyClosedClass;
+    };
+
+    /**
      * Retrieve the touch position/time
      *
      * @access public
@@ -168,7 +251,7 @@ export default class touchMenu {
      */
     isNavOpened()
     {
-        return utils.hasClass(document.body, 'nav-opened');
+        return utils.hasClass(document.body, this.getBodyOpenedClass());
     };
 
     /**
@@ -181,11 +264,11 @@ export default class touchMenu {
     toggleTransition(flag)
     {
         if (flag) {
-            utils.q('.nav').style.webkitTransitionDuration = '0.3s';
-            utils.q('.site-wrapper').style.webkitTransitionDuration = '0.3s';
+            this.getNav().style.webkitTransitionDuration = '0.3s';
+            this.getContent().style.webkitTransitionDuration = '0.3s';
         } else {
-            utils.q('.nav').style.webkitTransitionDuration = '0s';
-            utils.q('.site-wrapper').style.webkitTransitionDuration = '0s';
+            this.getNav().style.webkitTransitionDuration = '0s';
+            this.getContent().style.webkitTransitionDuration = '0s';
         }
     }
 
@@ -212,12 +295,12 @@ export default class touchMenu {
      */
     openMenu()
     {
-        this.setTransform(utils.q('.nav'), 0, 0, 0);
-        this.setTransform(utils.q('.site-wrapper'), -240, 0, 0);
+        this.setTransform(this.getNav(), 0, 0, 0);
+        this.setTransform(this.getContent(), -240, 0, 0);
         // Replace classes
-        utils.removeClass(document.body, 'nav-closed');
-        utils.removeClass(document.body, 'nav-opened');
-        utils.addClass(document.body, 'nav-opened');
+        utils.removeClass(document.body, this.getBodyClosedClass());
+        utils.removeClass(document.body, this.getBodyOpenedClass());
+        utils.addClass(document.body, this.getBodyOpenedClass());
     }
 
     /**
@@ -229,12 +312,12 @@ export default class touchMenu {
     closeMenu()
     {
         // Closes the menu
-        utils.q('.nav').removeAttribute('style');
-        utils.q('.site-wrapper').removeAttribute('style');
+        this.getNav().removeAttribute('style');
+        this.getContent().removeAttribute('style');
         // Replace classes
-        utils.removeClass(document.body, 'nav-closed');
-        utils.removeClass(document.body, 'nav-opened');
-        utils.addClass(document.body, 'nav-closed');
+        utils.removeClass(document.body, this.getBodyClosedClass());
+        utils.removeClass(document.body, this.getBodyOpenedClass());
+        utils.addClass(document.body, this.getBodyClosedClass());
     };
 
 };

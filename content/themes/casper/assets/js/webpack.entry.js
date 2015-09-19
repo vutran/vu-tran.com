@@ -12,4 +12,13 @@ import './index.js';
 import touchMenu from './components/touchMenu.js';
 
 
-new touchMenu();
+// Instantiate the touch menu
+var tm = new touchMenu({
+    bodyOpenedClass: 'nav-opened',
+    bodyClosedClass: 'nav-closed',
+    closeButton: '.nav-close',
+    openButton: '.menu-button',
+    nav: '.nav',
+    content: '.site-wrapper'
+});
+tm.init();
